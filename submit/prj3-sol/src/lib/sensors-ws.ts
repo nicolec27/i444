@@ -57,13 +57,161 @@ function setupRoutes(app: Express.Application) {
   //app.use(doTrace(app));
 
   //TODO: add routes
-
+  app.put(`${base}/sensor-types`, doCreateSensorType(app));
+  app.get(`${base}/sensor-types/id`, doGetSensorType(app));
+  app.get(`${base}/sensor-types`, doFindSensorTypes(app));
+  app.put(`${base}/sensors`, doCreateSensor(app));
+  app.get(`${base}/sensors/id`, doGetSensor(app));
+  app.get(`${base}/sensors`, doFindSensors(app));
+  app.put(`${base}/sensor-readings`, doCreateSensorReading(app));
+  app.get(`${base}/sensor-readings`, doFindSensorReadings(app));
+  
   //must be last
   app.use(do404(app));  //custom handler for page not found
   app.use(doErrors(app)); //custom handler for internal errors
 }
 
 // TODO: add route handlers 
+function doCreateSensorType(app: Express.Application) {
+  return async function (req: Express.Request, res: Express.Response) {
+    try {
+      const result = await app.locals.sensorsInfo.addSensorType(req.body);
+      if (!result.isOk) throw result;
+      const registeredSensorType = result.val;
+      const { id } = registeredSensorType;
+      res.location(selfHref(req, id));
+      const response = selfResult<SensorType>(req, registeredSensorType, STATUS.CREATED);
+      res.status(STATUS.CREATED).json(response);
+    } catch (err) {
+      const mapped = mapResultErrors(err);
+      res.status(mapped.status).json(mapped);
+    }
+  };
+}
+
+function doCreateSensor(app: Express.Application) {
+  return async function (req: Express.Request, res: Express.Response) {
+    try {
+      const result = await app.locals.sensorsInfo.addSensor(req.body);
+      if (!result.isOk) throw result;
+      const registeredSensor = result.val;
+      const { id } = registeredSensor;
+      res.location(selfHref(req, id));
+      const response = selfResult<Sensor>(req, registeredSensor, STATUS.CREATED);
+      res.status(STATUS.CREATED).json(response);
+    } catch (err) {
+      const mapped = mapResultErrors(err);
+      res.status(mapped.status).json(mapped);
+    }
+  };
+}
+
+function doCreateSensorReading(app: Express.Application) {
+  return async function (req: Express.Request, res: Express.Response) {
+    try {
+      const result = await app.locals.sensorsInfo.addSensorReading(req.body);
+      if (!result.isOk) throw result;
+      const registeredSensorReading = result.val;
+      const { id } = registeredSensorReading;
+      res.location(selfHref(req, id));
+      const response = selfResult<SensorReading>(req, registeredSensorReading, STATUS.CREATED);
+      res.status(STATUS.CREATED).json(response);
+    } catch (err) {
+      const mapped = mapResultErrors(err);
+      res.status(mapped.status).json(mapped);
+    }
+  };
+}
+
+function doGetSensorType(app: Express.Application) {
+  return (async function(req: Express.Request, res: Express.Response) {
+      try {
+          const { id } = req.params;
+          const result = await app.locals.sensorsInfo.findSensorTypes({id});
+          if (!result.isOk) throw result;
+          const response = selfResult<SensorType>(req, result.val);
+          res.json(response);
+      }
+      catch(err) {
+          const mapped = mapResultErrors(err);
+          res.status(mapped.status).json(mapped);
+      }
+  });
+}
+
+function doFindSensorTypes(app: Express.Application) {
+  return (async function(req: RequestWithQuery, res: Express.Response) {
+    try {
+      const q = { ...req.query };      
+      const index = Number(q.index ??  DEFAULT_INDEX);
+      const count = Number(q.count ??  DEFAULT_COUNT);
+      const q1 = { ...q, count: count + 1, index };
+      const result = await app.locals.sensorsInfo.findSensorTypes(q1);
+      if (!result.isOk) throw result;
+      const response = pagedResult<SensorType>(req, 'id', result.val);
+      res.json(response);
+    }
+    catch(err) {
+      const mapped = mapResultErrors(err);
+      res.status(mapped.status).json(mapped);
+    }
+  });
+}
+
+function doFindSensors(app: Express.Application) {
+  return (async function(req: RequestWithQuery, res: Express.Response) {
+    try {
+      const q = { ...req.query };      
+      const index = Number(q.index ??  DEFAULT_INDEX);
+      const count = Number(q.count ??  DEFAULT_COUNT);
+      const q1 = { ...q, count: count + 1, index };
+      const result = await app.locals.sensorsInfo.findSensors(q1);
+      if (!result.isOk) throw result;
+      const response = pagedResult<Sensor>(req, 'id', result.val);
+      res.json(response);
+    }
+    catch(err) {
+      const mapped = mapResultErrors(err);
+      res.status(mapped.status).json(mapped);
+    }
+  });
+}
+
+function doGetSensor(app: Express.Application) {
+  return (async function(req: Express.Request, res: Express.Response) {
+      try {
+          const { id } = req.params;
+          const result = await app.locals.sensorsInfo.findSensors({id});
+          if (!result.isOk) throw result;
+          const response = selfResult<Sensor>(req, result.val);
+          res.json(response);
+      }
+      catch(err) {
+          const mapped = mapResultErrors(err);
+          res.status(mapped.status).json(mapped);
+      }
+  });
+}
+
+
+function doFindSensorReadings(app: Express.Application) {
+  return (async function(req: RequestWithQuery, res: Express.Response) {
+    try {
+      const q = { ...req.query };      
+      const index = Number(q.index ??  DEFAULT_INDEX);
+      const count = Number(q.count ??  DEFAULT_COUNT);
+      const q1 = { ...q, count: count + 1, index };
+      const result = await app.locals.sensorsInfo.findSensorReadings(q1);
+      if (!result.isOk) throw result;
+      const response = pagedResult<SensorReading>(req, 'timestamp', result.val);
+      res.json(response);
+    }
+    catch(err) {
+      const mapped = mapResultErrors(err);
+      res.status(mapped.status).json(mapped);
+    }
+  });
+}
 
 function doTrace(app: Express.Application) {
   return (async function(req: Express.Request, res: Express.Response, 
