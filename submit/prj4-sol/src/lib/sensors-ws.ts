@@ -104,7 +104,27 @@ async function addData<T>(url: URL, data: Record<string, string>,
 			  displayFn: (t: T) => Record<string, string>)
   : Promise<Errors.Result<Record<string, string>>>
 {
-  return Errors.errResult('TODO');
+  try {
+    const response = await fetch(url, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(data),
+    });
+    const envelope = await response.json();
+    if (envelope.isOk === false) {
+      const errorEnvelope = new Errors.ErrResult(envelope.errors);
+      // use ErrResult
+      return errorEnvelope;
+    }
+    else {
+      const displayValue = displayFn(envelope.result);
+      return Errors.okResult(displayValue);
+    }
+  } catch (err) {
+    return Errors.errResult(err);
+  }
 }
 
 /** a type representing scrollable results returned by find* services */
@@ -126,7 +146,35 @@ async function findData<T>(url: URL,
 			   displayFn: (t: T) => Record<string, string>)
   : Promise<Errors.Result<PagedValues>>
 {
-  return Errors.errResult('TODO');
+  try {
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    const pagedEnvelope = await response.json(); 
+    const displayValues: Record<string, string>[] = [];
+
+    for (const res of pagedEnvelope.result) {
+      // console.log(displayFn(res.result));
+      // const displayValue = displayFn(res.result);
+      displayValues.push(displayFn(res.result));
+    }
+
+    const pagedValues: PagedValues = {
+      values: displayValues,
+      next: pagedEnvelope.links.next,
+      prev: pagedEnvelope.links.prev,
+    };
+  
+
+    return Errors.okResult(pagedValues);
+  } 
+  catch (err) {
+    return Errors.errResult(err);
+  }
 }
 
 /** Given a baseUrl and req, return a URL object which contains
