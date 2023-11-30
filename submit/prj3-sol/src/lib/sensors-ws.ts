@@ -58,10 +58,10 @@ function setupRoutes(app: Express.Application) {
 
   //TODO: add routes
   app.put(`${base}/sensor-types`, doCreateSensorType(app));
-  app.get(`${base}/sensor-types/id`, doGetSensorType(app));
+  app.get(`${base}/sensor-types/:id`, doGetSensorType(app));
   app.get(`${base}/sensor-types`, doFindSensorTypes(app));
   app.put(`${base}/sensors`, doCreateSensor(app));
-  app.get(`${base}/sensors/id`, doGetSensor(app));
+  app.get(`${base}/sensors/:id`, doGetSensor(app));
   app.get(`${base}/sensors`, doFindSensors(app));
   app.put(`${base}/sensor-readings`, doCreateSensorReading(app));
   app.get(`${base}/sensor-readings`, doFindSensorReadings(app));
@@ -126,8 +126,8 @@ function doCreateSensorReading(app: Express.Application) {
 function doGetSensorType(app: Express.Application) {
   return (async function(req: Express.Request, res: Express.Response) {
       try {
-          const { id } = req.params;
-          const result = await app.locals.sensorsInfo.findSensorTypes({id});
+          const id = req.params;
+          const result = await app.locals.sensorsInfo.findSensorTypes({ id });
           if (!result.isOk) throw result;
           const response = selfResult<SensorType>(req, result.val);
           res.json(response);
